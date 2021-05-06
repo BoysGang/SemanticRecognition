@@ -2,28 +2,48 @@ import argparse
 from training import train
 from predicting import predict
 
-def main():
-    parser = argparse.ArgumentParser(description='Sematic Recognition by BoysGang')
-    parser.add_argument('--train', nargs=4, metavar=('DATA_PATH', 'MODEL_PATH', 'WIDTH', 'HEIGHT'), help='Train model for image classification')
-    parser.add_argument('--predict', nargs=4, metavar=('IMG_PATH', 'MODEL_PATH', 'WIDTH', 'HEIGHT'), help='Classify image by trained model')
+
+def main(command_line=None):
+    images_width = 80
+    images_height = 80
     
-    args = parser.parse_args()._get_kwargs()[0]
+    parser = argparse.ArgumentParser('Sematic Recognition by BoysGang')
+    
+    subprasers = parser.add_subparsers(dest='command')
+    
+    train_parser = subprasers.add_parser('train', help='train model for image classification')
+    train_parser.add_argument('data_path', help='folder with training data, ' +
+                'images of each class should be stored in a subfolder named after this class')
+    train_parser.add_argument('model_path', help='file to store trained model')
+    train_parser.add_argument('--width', help='width to which the images will be resized')
+    train_parser.add_argument('--height', help='height to which the images will be resized')
+    
+    predict_parser = subprasers.add_parser('predict', help='classify image by trained model')
+    predict_parser.add_argument('img_path', help='path to the image for classification')
+    predict_parser.add_argument('model_path', help='path to trained model')
+    predict_parser.add_argument('--width', help='width to which the images will be resized')
+    predict_parser.add_argument('--height', help='height to which the images will be resized')
+    
+    args = parser.parse_args(command_line)
+    
+    if args.command == "train":
+        if args.width:
+            images_width = args.width
+        
+        if args.height:
+            images_height = args.height
 
-    if parser.parse_args().train:
-        data_path = args[1][0]
-        model_path = args[1][1]
-        width = int(args[1][2])
-        height = int(args[1][3])
+        train(args.data_path, args.model_path, images_width, images_height)
+    
+    if args.command == 'predict':
+        if args.width:
+            images_width = args.width
+        
+        if args.height:
+            images_height = args.height
 
-        train(data_path, model_path, width, height)
-
-    elif parser.parse_args().predict:
-        img_path = args[1][0]
-        model_path = args[1][1]
-        width = int(args[1][2])
-        height = int(args[1][3])
-
-        predict(model_path, img_path, width, height)
+        predict(args.model_path, args.img_path, images_width, images_height)
+        
 
 if __name__ == '__main__':
     main()
