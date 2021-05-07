@@ -7,18 +7,20 @@ def main(command_line=None):
     images_width = 80
     images_height = 80
     
-    parser = argparse.ArgumentParser('Sematic Recognition by BoysGang')
+    parser = argparse.ArgumentParser(description='Sematic Recognition by BoysGang')
     
     subprasers = parser.add_subparsers(dest='command')
     
-    train_parser = subprasers.add_parser('train', help='train model for image classification')
+    train_help_msg = 'train model for image classification'
+    train_parser = subprasers.add_parser('train', help=train_help_msg, description=train_help_msg)
     train_parser.add_argument('data_path', help='folder with training data, ' +
                 'images of each class should be stored in a subfolder named after this class')
     train_parser.add_argument('model_path', help='file to store trained model')
     train_parser.add_argument('--width', help='width to which the images will be resized')
     train_parser.add_argument('--height', help='height to which the images will be resized')
     
-    predict_parser = subprasers.add_parser('predict', help='classify image by trained model')
+    predict_help_msg = 'classify image by trained model'
+    predict_parser = subprasers.add_parser('predict', help=predict_help_msg, description=predict_help_msg)
     predict_parser.add_argument('img_path', help='path to the image for classification')
     predict_parser.add_argument('model_path', help='path to trained model')
     predict_parser.add_argument('--width', help='width to which the images will be resized')
