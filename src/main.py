@@ -7,7 +7,7 @@ def main(command_line=None):
     images_width = 80
     images_height = 80
     
-    parser = argparse.ArgumentParser('Sematic Recognition by BoysGang')
+    parser = argparse.ArgumentParser('Semantic Recognition by BoysGang')
     
     subprasers = parser.add_subparsers(dest='command')
     
@@ -28,19 +28,19 @@ def main(command_line=None):
     
     if args.command == "train":
         if args.width:
-            images_width = args.width
+            images_width = int(args.width)
         
         if args.height:
-            images_height = args.height
+            images_height = int(args.height)
 
         train(args.data_path, args.model_path, images_width, images_height)
     
     if args.command == 'predict':
         if args.width:
-            images_width = args.width
+            images_width = int(args.width)
         
         if args.height:
-            images_height = args.height
+            images_height = int(args.height)
 
         predict(args.model_path, args.img_path, images_width, images_height)
         
