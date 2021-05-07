@@ -9,6 +9,7 @@ from skimage.io import imread
 from skimage.transform import resize
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 
 
 def resize_all(src, width=80, height=None):
@@ -82,7 +83,10 @@ def train(data_path, model_path, width=80, height=None):
     X_train = reshape_image_data(X_train)
     X_test = reshape_image_data(X_test)
 
-    reg_log = LogisticRegression()
-    reg_log.fit(X_train, y_train)
+    classifier = RandomForestClassifier(n_jobs=-1)
+    classifier.fit(X_train, y_train)
 
-    joblib.dump(reg_log, model_path)
+    y_pred = classifier.predict(X_test)
+    print(metrics.classification_report(y_test, y_pred))
+
+    joblib.dump(classifier, model_path)
