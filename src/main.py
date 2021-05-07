@@ -28,19 +28,19 @@ def main(command_line=None):
     
     if args.command == "train":
         if args.width:
-            images_width = args.width
+            images_width = int(args.width)
         
         if args.height:
-            images_height = args.height
+            images_height = int(args.height)
 
         train(args.data_path, args.model_path, images_width, images_height)
     
     if args.command == 'predict':
         if args.width:
-            images_width = args.width
+            images_width = int(args.width)
         
         if args.height:
-            images_height = args.height
+            images_height = int(args.height)
 
         predict(args.model_path, args.img_path, images_width, images_height)
         
