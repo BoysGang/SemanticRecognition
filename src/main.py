@@ -1,7 +1,4 @@
 import argparse
-from training import train
-from predicting import predict
-
 
 def main(command_line=None):
     images_width = 80
@@ -29,6 +26,8 @@ def main(command_line=None):
     args = parser.parse_args(command_line)
     
     if args.command == "train":
+        from training import train
+
         if args.width:
             images_width = int(args.width)
         
@@ -38,6 +37,8 @@ def main(command_line=None):
         train(args.data_path, args.model_path, images_width, images_height)
     
     if args.command == 'predict':
+        from predicting import predict
+
         if args.width:
             images_width = int(args.width)
         
