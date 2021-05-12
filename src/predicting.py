@@ -1,18 +1,14 @@
 import joblib
+import numpy as np
+
 from skimage.transform import resize
 from skimage.io import imread
 from sklearn.linear_model import LogisticRegression
+
+from tensorflow.keras import models
+from tensorflow.keras.preprocessing import image
+
 from prettytable import PrettyTable
-
-
-def load_image(path, width, height):
-    im = imread(path)
-    im = resize(im, (width,height))
-
-    nx, ny, nz = im.shape
-    im = im.reshape((1,nx*ny*nz))
-
-    return im
 
 
 def print_probabilities(labels, probabilities):
@@ -24,7 +20,13 @@ def print_probabilities(labels, probabilities):
 
 
 def predict(model_path, img_path, width, height):
-    model = joblib.load(model_path)
-    image = load_image(img_path, width, height)
+    model = models.load_model(model_path)
 
-    print_probabilities(list(model.classes_), model.predict_proba(image))
+    img = image.load_img(img_path, target_size=(width, height))
+    x = image.img_to_array(img) / 255
+    x = np.expand_dims(x, axis=0)
+
+    images = np.vstack([x])
+    probabilities = model.predict(images, batch_size=10)
+
+    print(probabilities.tolist()[0])

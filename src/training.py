@@ -12,81 +12,50 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 
 
-def resize_all(src, width=80, height=None):
-    """
-    Load images from path, resize them and write them as arrays to a dictionary, 
-    together with labels and metadata.
-     
-    Parameter
-    ---------
-    src: str
-        path to data
-    width: int
-        target width of the image in pixels
-    """
-     
-    height = height if height is not None else width
-     
-    data = dict()
-    data['description'] = 'resized ({0}x{1}) images in rgb'.format(int(width), int(height))
-    data['label'] = []
-    data['filename'] = []
-    data['data'] = []
- 
-    # Read all images in PATH, resize and write to DESTINATION_PATH
-    for subdir in os.listdir(src):
-        print(subdir)
-        current_path = os.path.join(src, subdir)
-
-        for file in os.listdir(current_path):
-            if file[-3:] in {'jpg', 'png'}:
-                im = imread(os.path.join(current_path, file))
-                im = resize(im, (width, height))
-
-                if im.shape != (width, height, 3):
-                    continue
-
-                data['label'].append(subdir)
-                data['filename'].append(file)
-                data['data'].append(im)
-
-    return data
-
-
-def reshape_image_data(array):
-    nsamples, nx, ny, nz = array.shape
-    new_array = array.reshape((nsamples,nx*ny*nz))
-
-    return new_array
+from tensorflow.keras import datasets, layers, models
+from keras_preprocessing.image import ImageDataGenerator
 
 
 def train(data_path, model_path, width=80, height=None):
-    data = resize_all(src=data_path, width=width, height=height)
-    
-    print('Number of samples: ', len(data['data']))
-    print('Keys: ', list(data.keys()))
-    print('Description: ', data['description'])
-    print('Image shape: ', data['data'][0].shape)
-    print('Labels:', np.unique(data['label']))
 
-    X = np.array(data['data'])
-    y = np.array(data['label'])
- 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, 
-        y, 
-        test_size=0.2, 
-        shuffle=True,
-        random_state=42,
+    TRAINING_DIR = data_path
+    training_datagen = ImageDataGenerator(rescale = 1./255)
+
+    train_generator = training_datagen.flow_from_directory(
+        TRAINING_DIR,
+        target_size=(width, height),
+        class_mode='categorical',
+        batch_size=126
     )
+    
+    shape = train_generator.image_shape
+    labels = list(train_generator.class_indices.keys())
 
-    X_train = reshape_image_data(X_train)
-    X_test = reshape_image_data(X_test)
+    print('Number of samples: ', train_generator.samples)
+    print('Image shape: ', shape)
+    print('Labels:', labels)
 
-    classifier = RandomForestClassifier(n_jobs=-1)
-    classifier.fit(X_train, y_train)
+    cnn = models.Sequential([
+        layers.Conv2D(filters=64, kernel_size=(3, 3), activation='relu', input_shape=shape),
+        layers.MaxPooling2D((2, 2)),
+        
+        layers.Conv2D(filters=64, kernel_size=(3, 3), activation='relu'),
+        layers.MaxPooling2D((2, 2)),
+        
+        layers.Flatten(),
+        layers.Dense(128, activation='relu'),
+        layers.Dense(2, activation='softmax')
+    ])
 
-    y_pred = classifier.predict(X_test)
-    print(metrics.classification_report(y_test, y_pred))
+    cnn.summary()
 
-    joblib.dump(classifier, model_path)
+    cnn.compile(optimizer='adam',
+              loss='categorical_crossentropy',
+              metrics=['accuracy'])
+    
+    cnn.fit(train_generator, epochs=5)
+
+    # Cannot add just list of labels
+    cnn.labels = np.array(labels)
+    
+    cnn.save(model_path)
