@@ -5,11 +5,14 @@ import joblib
 
 
 from sklearn import metrics
-from skimage.io import imread
-from skimage.transform import resize
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+
+import cv2
+from scipy.cluster.vq import kmeans, vq
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import LinearSVC
 
 
 def resize_all(src, width=80, height=None):
@@ -32,6 +35,13 @@ def resize_all(src, width=80, height=None):
     data['label'] = []
     data['filename'] = []
     data['data'] = []
+
+    # Create feature extraction and keypoint detector objects    
+    # Create List where all the descriptors will be stored
+    data['descriptors'] = []
+
+    #BRISK is a good replacement to SIFT. ORB also works but didn;t work well for this example
+    orb = cv2.ORB_create(30)
  
     # Read all images in PATH, resize and write to DESTINATION_PATH
     for subdir in os.listdir(src):
@@ -40,15 +50,20 @@ def resize_all(src, width=80, height=None):
 
         for file in os.listdir(current_path):
             if file[-3:] in {'jpg', 'png'}:
-                im = imread(os.path.join(current_path, file))
-                im = resize(im, (width, height))
+                grayscale = 0
+                im = cv2.imread(os.path.join(current_path, file)).astype(np.float32)
+                im = cv2.resize(im, (width, height))
 
                 if im.shape != (width, height, 3):
                     continue
-
-                data['label'].append(subdir)
-                data['filename'].append(file)
-                data['data'].append(im)
+                
+                _, des = orb.detectAndCompute(im, None)
+                
+                if des is not None:
+                    data['descriptors'].append(des)   
+                    data['label'].append(subdir)
+                    data['filename'].append(file)
+                    data['data'].append(im)
 
     return data
 
@@ -69,24 +84,38 @@ def train(data_path, model_path, width=80, height=None):
     print('Image shape: ', data['data'][0].shape)
     print('Labels:', np.unique(data['label']))
 
-    X = np.array(data['data'])
-    y = np.array(data['label'])
- 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, 
-        y, 
-        test_size=0.2, 
-        shuffle=True,
-        random_state=42,
-    )
+    descriptors = data["descriptors"][0][1]
+    for descriptor in data["descriptors"][0:]:
+        descriptors = np.vstack((descriptors, descriptor))
 
-    X_train = reshape_image_data(X_train)
-    X_test = reshape_image_data(X_test)
+    #kmeans works only on float, so convert integers to float
+    descriptors_float = descriptors.astype(float)
 
-    classifier = RandomForestClassifier(n_jobs=-1)
-    classifier.fit(X_train, y_train)
+    # Perform k-means clustering and vector quantization
+    k = 200 
+    voc, variance = kmeans(descriptors_float, k, 1)
 
-    y_pred = classifier.predict(X_test)
-    print(metrics.classification_report(y_test, y_pred))
+    # Calculate the histogram of features and represent them as vector
+    #vq Assigns codes from a code book to observations.
+    im_features = np.zeros((len(data['data']), k), "float32")
+    for i in range(len(data['data'])):
+        words, distance = vq(data["descriptors"][i] ,voc)
+        for w in words:
+            im_features[i][w] += 1
 
-    joblib.dump(classifier, model_path)
+    # Perform Tf-Idf vectorization
+    nbr_occurences = np.sum( (im_features > 0) * 1, axis = 0)
+    idf = np.array(np.log((1.0*len(data['data'])+1) / (1.0*nbr_occurences + 1)), 'float32')
+
+    # Scaling the words
+    #Standardize features by removing the mean and scaling to unit variance
+    #In a way normalization
+    stdSlr = StandardScaler().fit(im_features)
+    im_features = stdSlr.transform(im_features)
+
+    #Train an algorithm to discriminate vectors corresponding to positive and negative training images
+    # Train the Linear SVM
+    clf = LinearSVC(max_iter=10000)  #Default of 100 is not converging
+    clf.fit(im_features, np.array(data['label']))
+
+    joblib.dump((clf, None, stdSlr, k, voc), model_path, compress=3) 
