@@ -3,10 +3,12 @@ import joblib
 import numpy as np
 import pickle
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from tensorflow.keras import models
 from tensorflow.keras.preprocessing import image
 
 from prettytable import PrettyTable
+
 
 
 def print_probabilities(labels, probabilities):
