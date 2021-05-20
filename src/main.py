@@ -1,8 +1,19 @@
 import argparse
 import os
 
+from prettytable import PrettyTable
+
+
 def config():
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+
+def print_prediction(labels, probabilities):
+    table = PrettyTable(['Class', 'Probability'])
+    for i in range(len(labels)):
+        table.add_row([labels[i], probabilities[i]])
+
+    print(table)
 
 
 def main(command_line=None):
@@ -45,6 +56,8 @@ def main(command_line=None):
     predict_parser.add_argument('--height',
                 help=f'height to which the images will be resized, default value is {images_height}',
                 type=int)
+    predict_parser.add_argument('--graph_path',
+                help=f'path to the semantic graph (if defined then semantic correction will be used)',)
     
     # graph
     graph_help_msg = 'semantic graph module' 
@@ -87,11 +100,12 @@ def main(command_line=None):
             epochs = args.epochs
 
         cnn = ConvolutionalNeuralNetwork()
-        cnn.train(args.data_path, images_width, images_height, epochs)
+        cnn.train(args.data_path, images_width, images_height, epochs, plot=True)
         cnn.save(args.model_path)
     
     elif args.command == 'predict':
         from ConvolutionalNeuralNetwork import ConvolutionalNeuralNetwork
+        from SemanticCorrection import SemanticCorrection, SemanticGraph
 
         if args.width:
             images_width = args.width
@@ -100,7 +114,22 @@ def main(command_line=None):
 
         cnn = ConvolutionalNeuralNetwork()
         cnn.load(args.model_path)
-        cnn.print_prediction(args.img_path, images_width, images_height)
+        probabilities = cnn.predict_proba(args.img_path, images_width, images_height)
+        labels = cnn.labels
+
+        print('Classification result:')
+        print_prediction(labels, probabilities)
+
+        if args.graph_path:
+            # labels = ['Автомобиль', 'Самолет', 'Цветок', 'Колесо', 'Мост', 'Небо', 'Кошка', 'Облако']
+            # probabilities = [0.98, 0.9, 0.98, 0.96, 0.94, 0.94, 0.94, 0.97]
+            graph = SemanticGraph.load(args.graph_path)
+            semantic_correction = SemanticCorrection(labels, probabilities, graph)
+            labels, probabilities = semantic_correction.execute()
+
+            print('\nClassification result after semantic correction:')
+            print_prediction(labels, probabilities)
+
 
     elif args.command == 'filter':
         from SemanticGraph import SemanticGraph
