@@ -87,7 +87,7 @@ class ConvolutionalNeuralNetwork:
         self.__model.summary()
 
         self.__model.compile(optimizer='adam',
-                loss='categorical_crossentropy',
+                loss='binary_crossentropy',
                 metrics=['accuracy'])
         
         print("\nTraining:")
@@ -118,16 +118,16 @@ class ConvolutionalNeuralNetwork:
 
             plt.figure(figsize=(8,8))
             plt.subplot(1, 2, 1)
-            plt.plot(epochs_range, acc, label='Точность на обучении')
-            plt.plot(epochs_range, val_acc, label='Точность на валидации')
+            plt.plot(epochs_range, acc, label='Train accuracy')
+            plt.plot(epochs_range, val_acc, label='Validation accuracy')
             plt.legend(loc='lower right')
-            plt.title('Точность на обучающих и валидационных данных')
+            plt.title('Accuracy')
 
             plt.subplot(1, 2, 2)
-            plt.plot(epochs_range, loss, label='Потери на обучении')
-            plt.plot(epochs_range, val_loss, label='Потери на валидации')
+            plt.plot(epochs_range, loss, label='Train loss')
+            plt.plot(epochs_range, val_loss, label='Validation loss')
             plt.legend(loc='upper right')
-            plt.title('Потери на обучающих и валидационных данных')
+            plt.title('Loss')
             plt.show()
 
     def predict(self, img_path, width, height):
