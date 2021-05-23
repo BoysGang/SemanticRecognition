@@ -3,11 +3,15 @@ import joblib
 import numpy as np
 import matplotlib.pyplot as plt
 
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+
 from sklearn.metrics import classification_report, confusion_matrix
 
 import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.preprocessing import image
+from tensorflow.keras import regularizers
 from keras_preprocessing.image import ImageDataGenerator
 
 
@@ -39,6 +43,7 @@ class ConvolutionalNeuralNetwork:
             target_size=(width, height),
             class_mode='categorical',
             batch_size=batch_size,
+            color_mode='grayscale',
             shuffle=True,
             subset="training"
         )
@@ -48,6 +53,7 @@ class ConvolutionalNeuralNetwork:
             target_size=(width, height),
             class_mode='categorical',
             batch_size=batch_size,
+            color_mode='grayscale',
             shuffle=False,
             subset="validation"
         )
@@ -66,28 +72,26 @@ class ConvolutionalNeuralNetwork:
         output_neurons = len(self.__labels)
 
         self.__model = models.Sequential([
-            layers.Conv2D(32, (3,3), activation='relu', input_shape=shape),
+            layers.Conv2D(32, (3,3), activation='relu', input_shape=shape, kernel_regularizer=regularizers.l2(l=0.01)),
             layers.MaxPooling2D(2, 2),
 
-            layers.Conv2D(64, (3, 3), activation='relu'),
+            layers.Conv2D(64, (3, 3), activation='relu', kernel_regularizer=regularizers.l2(l=0.01)),
             layers.MaxPooling2D(2, 2),
 
-            layers.Conv2D(128, (3, 3), activation='relu'),
+            layers.Conv2D(128, (3, 3), activation='relu', kernel_regularizer=regularizers.l2(l=0.01)),
             layers.MaxPooling2D(2, 2),
 
-            layers.Conv2D(128, (3, 3), activation='relu'),
-            layers.MaxPooling2D(2, 2),
-
-            layers.Dropout(0.5),
+            layers.Dropout(0.4),
             layers.Flatten(),
-            layers.Dense(512, activation='relu'),
+            layers.Dense(128, activation='relu'),
+            layers.Dropout(0.2),
             layers.Dense(output_neurons, activation='sigmoid')
         ])
 
         self.__model.summary()
 
         self.__model.compile(optimizer='adam',
-                loss='binary_crossentropy',
+                loss='categorical_crossentropy',
                 metrics=['accuracy'])
         
         print("\nTraining:")
@@ -136,7 +140,7 @@ class ConvolutionalNeuralNetwork:
         return self.__labels(np.argmax(probabilities))
 
     def predict_proba(self, img_path, width, height):
-        img = image.load_img(img_path, target_size=(width, height))
+        img = image.load_img(img_path, target_size=(width, height), color_mode='grayscale')
         x = image.img_to_array(img) / 255
         x = np.expand_dims(x, axis=0)
 

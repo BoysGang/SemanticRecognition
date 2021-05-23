@@ -100,7 +100,7 @@ def main(command_line=None):
             epochs = args.epochs
 
         cnn = ConvolutionalNeuralNetwork()
-        cnn.train(args.data_path, images_width, images_height, epochs, plot=True)
+        cnn.train(args.data_path, images_width, images_height, epochs, plot=True, batch_size=128)
         cnn.save(args.model_path)
     
     elif args.command == 'predict':
