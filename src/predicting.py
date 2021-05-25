@@ -1,14 +1,12 @@
 import joblib
 from skimage.transform import resize
 from skimage.io import imread
-from sklearn.linear_model import LogisticRegression
+from cv2 import ORB_create as sift
 from prettytable import PrettyTable
 import numpy as np
 
 import cv2
-from scipy.cluster.vq import kmeans, vq
-from sklearn.preprocessing import StandardScaler
-from sklearn.svm import LinearSVC   
+from scipy.cluster.vq import vq
 
 
 def load_image(path, width, height):
@@ -33,10 +31,10 @@ def predict(model_path, img_path, width, height):
     # Load the classifier, class names, scaler, number of clusters and vocabulary 
     #from stored pickle file (generated during training)
     clf, classes_names, stdSlr, k, voc = joblib.load(model_path)
-    orb = cv2.ORB_create(30)
+    feature_extractor = sift(30)
     
-    im = cv2.imread(img_path)
-    kpts, des = orb.detectAndCompute(im, None)
+    im = imread(img_path)
+    _, des = feature_extractor.detectAndCompute(im, None)
 
     # Stack all the descriptors vertically in a numpy array
     descriptors = des[0]
@@ -45,20 +43,18 @@ def predict(model_path, img_path, width, height):
 
     # Calculate the histogram of features
     #vq Assigns codes from a code book to observations.
-    feature = np.zeros((k), "float32")
-    words, distance = vq(des, voc)
+    features = np.zeros((1, k), "float32")
+    words, _ = vq(des, voc)
     for w in words:
-        feature[w] += 1
-
-    # Perform Tf-Idf vectorization
-    nbr_occurences = np.sum( (feature > 0) * 1, axis = 0)
-    idf = np.array(np.log((2) / (1.0*nbr_occurences + 1)), 'float32')
+        features[0][w] += 1
 
     # Scale the features
-    #Standardize features by removing the mean and scaling to unit variance
-    #Scaler (stdSlr comes from the pickled file we imported)
-    feature = feature.reshape(1, -1)
-    feature = stdSlr.transform(feature)
+    # Standardize features by removing the mean and scaling to unit variance
+    features = features.reshape(1, -1)
+    features = stdSlr.transform(features)
 
-    print(clf.predict(feature))
-    print(clf.decision_function(feature))
+    print_probabilities(list(classes_names), clf.predict_proba(features))
+
+
+if __name__ == "__main__":
+    predict("A:\\!Projects\\SemanticRecognition\\model\\bovw-sklearn", "A:\\!Downloads\\dog_pers.jpg", 80, 80)
