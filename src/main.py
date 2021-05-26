@@ -131,7 +131,7 @@ def main(command_line=None):
             graph = SemanticGraph.load(args.graph_path)
             semantic_correction = SemanticCorrection(labels, probabilities, graph)
 
-            semantic_correction.set_method(PairCorrection(3, 0.3))
+            semantic_correction.set_method(PairCorrection())
 
             labels, probabilities = semantic_correction.apply()
 
