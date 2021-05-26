@@ -10,54 +10,36 @@ from sklearn.metrics import classification_report, confusion_matrix
 
 import tensorflow as tf
 from tensorflow.keras import layers, models
-from tensorflow.keras.preprocessing import image
 from tensorflow.keras import regularizers
-from keras_preprocessing.image import ImageDataGenerator
 
+from ImageClassifier import ImageClassifier
+from ImgDataGenerator import ImgDataGenerator
 
-class ConvolutionalNeuralNetwork:
-    def __init__(self):
-        self.__model = None
-        self.__labels = None
+class ConvolutionalNeuralNetwork(ImageClassifier):
+    def __init__(self, epochs=1, plot_fit_hist=True, acceleration=False, model=None, labels=None, img_loader=None):
+        super().__init__()
 
+        self.__epochs = epochs
+        self.__plot_fit_hist = plot_fit_hist
+        self.__acceleration = acceleration
+
+        self.__model = model
+        self.__labels = labels
+        self._img_loader = img_loader
+        
         physical_devices = tf.config.list_physical_devices('GPU') 
 
-        if physical_devices:
+        if physical_devices and acceleration:
             tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
-    def train(self, data_path, width=80, height=80, epochs=100, batch_size=64, plot=False):
-        training_datagen = ImageDataGenerator(
-            rescale=1./255,
-            rotation_range=40,
-            width_shift_range=0.2,
-            height_shift_range=0.2,
-            validation_split=0.2,
-            shear_range=0.2,
-            zoom_range=0.2,
-            horizontal_flip=True,
-            fill_mode='nearest'
-        )
+    def fit(self, img_data_generator: ImgDataGenerator):
+        self._init_img_loader(img_data_generator)
 
-        train_generator = training_datagen.flow_from_directory(
-            data_path,
-            target_size=(width, height),
-            class_mode='categorical',
-            batch_size=batch_size,
-            color_mode='grayscale',
-            shuffle=True,
-            subset="training"
-        )
+        train_generator = img_data_generator.train_generator
+        validation_generator = img_data_generator.validation_generator
 
-        validation_generator = training_datagen.flow_from_directory(
-            data_path,
-            target_size=(width, height),
-            class_mode='categorical',
-            batch_size=batch_size,
-            color_mode='grayscale',
-            shuffle=False,
-            subset="validation"
-        )
-        
+        batch_size = img_data_generator.batch_size
+
         self.__labels = list(train_generator.class_indices.keys())
         
         shape = train_generator.image_shape
@@ -72,10 +54,7 @@ class ConvolutionalNeuralNetwork:
         output_neurons = len(self.__labels)
 
         self.__model = models.Sequential([
-            layers.Conv2D(32, (3,3), activation='relu', input_shape=shape, kernel_regularizer=regularizers.l2(l=0.01)),
-            layers.MaxPooling2D(2, 2),
-
-            layers.Conv2D(64, (3, 3), activation='relu', kernel_regularizer=regularizers.l2(l=0.01)),
+            layers.Conv2D(64, (3,3), activation='relu', input_shape=shape, kernel_regularizer=regularizers.l2(l=0.01)),
             layers.MaxPooling2D(2, 2),
 
             layers.Conv2D(128, (3, 3), activation='relu', kernel_regularizer=regularizers.l2(l=0.01)),
@@ -96,7 +75,7 @@ class ConvolutionalNeuralNetwork:
         
         print("\nTraining:")
         history = self.__model.fit(train_generator,
-                epochs=epochs,
+                epochs=self.__epochs,
                 steps_per_epoch=train_samples_num // batch_size,
                 validation_data=validation_generator,
                 validation_steps=validation_samples_num // batch_size)
@@ -111,52 +90,52 @@ class ConvolutionalNeuralNetwork:
         print('\nClassification Report:')
         print(classification_report(validation_generator.classes, y_pred, target_names=self.__labels))
 
-        if plot:
-            acc = history.history['accuracy']
-            val_acc = history.history['val_accuracy']
+        if self.__plot_fit_hist:
+            self.__plot_hist(history)
 
-            loss = history.history['loss']
-            val_loss = history.history['val_loss']
+    def predict(self, img_path):
+        image = self._img_loader.load_img(img_path)
 
-            epochs_range = range(epochs)
+        image = np.expand_dims(image, axis=0)
+        image = np.vstack([image])
 
-            plt.figure(figsize=(8,8))
-            plt.subplot(1, 2, 1)
-            plt.plot(epochs_range, acc, label='Train accuracy')
-            plt.plot(epochs_range, val_acc, label='Validation accuracy')
-            plt.legend(loc='lower right')
-            plt.title('Accuracy')
+        probabilities = self.__model.predict(image, batch_size=10)
 
-            plt.subplot(1, 2, 2)
-            plt.plot(epochs_range, loss, label='Train loss')
-            plt.plot(epochs_range, val_loss, label='Validation loss')
-            plt.legend(loc='upper right')
-            plt.title('Loss')
-            plt.show()
+        return self.__labels, probabilities[0]
 
-    def predict(self, img_path, width, height):
-        probabilities = self.predict_proba(img_path, width, height)
+    def save(self, path):
+        self.__model.save(path)
 
-        return self.__labels(np.argmax(probabilities))
+        joblib.dump(self._img_loader, os.path.join(path, "img_loader"))
+        joblib.dump(self.__labels, os.path.join(path, "labels"))
 
-    def predict_proba(self, img_path, width, height):
-        img = image.load_img(img_path, target_size=(width, height), color_mode='grayscale')
-        x = image.img_to_array(img) / 255
-        x = np.expand_dims(x, axis=0)
+    @classmethod
+    def load(cls, path):
+        model = models.load_model(path)
+        labels =  joblib.load(os.path.join(path, "labels"))
+        img_loader = joblib.load(os.path.join(path, "img_loader"))
 
-        images = np.vstack([x])
-        probabilities = self.__model.predict(images, batch_size=10)
+        return ConvolutionalNeuralNetwork(model=model, labels=labels, img_loader=img_loader)
 
-        return probabilities[0]
+    def __plot_hist(self, history):
+        acc = history.history['accuracy']
+        val_acc = history.history['val_accuracy']
 
-    def save(self, model_path):
-        self.__model.save(model_path)
-        joblib.dump(self.__labels, os.path.join(model_path, "labels"))
-        
-    def load(self, model_path):
-        self.__model = models.load_model(model_path)
-        self.__labels =  joblib.load(os.path.join(model_path, "labels"))
+        loss = history.history['loss']
+        val_loss = history.history['val_loss']
 
-    @property
-    def labels(self):
-        return self.__labels
+        epochs_range = range(self.__epochs)
+
+        plt.figure(figsize=(8,8))
+        plt.subplot(1, 2, 1)
+        plt.plot(epochs_range, acc, label='Train accuracy')
+        plt.plot(epochs_range, val_acc, label='Validation accuracy')
+        plt.legend(loc='lower right')
+        plt.title('Accuracy')
+
+        plt.subplot(1, 2, 2)
+        plt.plot(epochs_range, loss, label='Train loss')
+        plt.plot(epochs_range, val_loss, label='Validation loss')
+        plt.legend(loc='upper right')
+        plt.title('Loss')
+        plt.show()
