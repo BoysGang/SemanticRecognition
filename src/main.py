@@ -50,12 +50,6 @@ def main(command_line=None):
     predict_parser = subprasers.add_parser('predict', help=predict_help_msg, description=predict_help_msg)
     predict_parser.add_argument('img_path', help='path to the image for classification')
     predict_parser.add_argument('model_path', help='path to trained model')
-    predict_parser.add_argument('--width',
-                help=f'width to which the images will be resized, default value is {images_width}',
-                type=int)
-    predict_parser.add_argument('--height',
-                help=f'height to which the images will be resized, default value is {images_height}',
-                type=int)
     predict_parser.add_argument('--graph_path',
                 help=f'path to the semantic graph (if defined then semantic correction will be used)',)
     
@@ -91,6 +85,8 @@ def main(command_line=None):
     
     if args.command == "train":
         from ConvolutionalNeuralNetwork import ConvolutionalNeuralNetwork
+        from ClassifierContext import ClassifierContext
+        from ImgDataGenerator import ImgDataGenerator
 
         if args.width:
             images_width = args.width
@@ -99,23 +95,26 @@ def main(command_line=None):
         if args.epochs:
             epochs = args.epochs
 
-        cnn = ConvolutionalNeuralNetwork()
-        cnn.train(args.data_path, images_width, images_height, epochs, plot=True)
-        cnn.save(args.model_path)
+        img_data_generator = ImgDataGenerator(args.data_path, resize_to=(images_width, images_height), rotation_range=40, horizontal_flip=True)
+
+        cnn = ConvolutionalNeuralNetwork(epochs=epochs, acceleration=True)
+
+        classifier_context = ClassifierContext()
+        classifier_context.setClassifier(cnn)
+        classifier_context.fit(img_data_generator)
+        classifier_context.save(args.model_path)
     
     elif args.command == 'predict':
         from ConvolutionalNeuralNetwork import ConvolutionalNeuralNetwork
-        from SemanticCorrection import SemanticCorrection, SemanticGraph
+        from ClassifierContext import ClassifierContext
+        from ImgDataGenerator import ImgDataGenerator
+        from SemanticCorrection import SemanticCorrection
 
-        if args.width:
-            images_width = args.width
-        if args.height:
-            images_height = args.height
+        classifier_context = ClassifierContext()
+        cnn = ConvolutionalNeuralNetwork.load(args.model_path)
+        classifier_context.setClassifier(cnn)
 
-        cnn = ConvolutionalNeuralNetwork()
-        cnn.load(args.model_path)
-        probabilities = cnn.predict_proba(args.img_path, images_width, images_height)
-        labels = cnn.labels
+        labels, probabilities = classifier_context.predict(args.img_path)
 
         print('Classification result:')
         print_prediction(labels, probabilities)
@@ -129,7 +128,6 @@ def main(command_line=None):
 
             print('\nClassification result after semantic correction:')
             print_prediction(labels, probabilities)
-
 
     elif args.command == 'filter':
         from SemanticGraph import SemanticGraph

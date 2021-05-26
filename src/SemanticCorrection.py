@@ -1,3 +1,4 @@
+import networkx as nx
 from networkx.algorithms.centrality import closeness
 from SemanticGraph import SemanticGraph
 
@@ -9,7 +10,7 @@ class SemanticCorrection:
         self.__graph = semantic_graph
         self.__nodes = list(self.__graph.nodes)
 
-    def execute(self, d=0.6, threshold=0.3):
+    def execute(self, d=0.6, threshold=1, weight=1):
         nodes = self.__nodes
 
         closenesses = list()
@@ -26,6 +27,9 @@ class SemanticCorrection:
             closeness = self.__modified_dijkstra(d, threshold, node_index)
             normalization_closenesses.append(closeness)
 
+            # closenesses.append(self.__compute_closeness1(label, prediction, d, weight, threshold))
+            # normalization_closenesses.append(self.__compute_closeness1(label, 1, d, weight, threshold))
+
         classes_width = [sum(closeness) 
             for closeness in closenesses]
 
@@ -38,6 +42,25 @@ class SemanticCorrection:
         clusters = self.__concept_union(classes_width, normalized_width, closenesses)
 
         return clusters, normalized_width
+
+    # def __compute_closeness1(self, label, prediction, d, weight, threshold):
+    #     closeness = list()
+
+    #     for lbl in self.__labels:
+    #         path = nx.shortest_path(self.__graph, source=label, target=lbl, weight=weight)
+    #         edge_number = len(path) - 1
+
+    #         close = 1
+    #         for i in range(edge_number):    
+    #             if close >= threshold:
+    #                 close *= (d * weight)
+    #             else:
+    #                 close = 0
+    #                 break
+
+    #         closeness.append(close)
+
+    #     return closeness
 
     def __concept_union(self, classes_width, normalized_width, closenesses):
         clusters = self.__labels[::]
