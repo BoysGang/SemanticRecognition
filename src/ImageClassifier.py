@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import List
 from ImgDataGenerator import ImgDataGenerator
 from ImgLoader import ImgLoader
 
@@ -17,6 +16,10 @@ class ImageClassifier(ABC):
 
     @abstractmethod
     def save(self, path):
+        pass
+
+    @abstractmethod
+    def load(self, path):
         pass
 
     def _init_img_loader(self, img_data_generator: ImgDataGenerator):
