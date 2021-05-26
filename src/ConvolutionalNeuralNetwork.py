@@ -46,8 +46,9 @@ class ConvolutionalNeuralNetwork(ImageClassifier):
         train_samples_num = train_generator.samples
         validation_samples_num = validation_generator.samples
 
-        print('Number of samples: ', train_samples_num)
-        print('Image shape: ', shape)
+        print('Batch size:', batch_size)
+        print('Number of samples:', train_samples_num)
+        print('Image shape:', shape)
         print('Labels:', self.__labels)
         print()
 

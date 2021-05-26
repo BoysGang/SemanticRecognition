@@ -108,7 +108,10 @@ def main(command_line=None):
         from ConvolutionalNeuralNetwork import ConvolutionalNeuralNetwork
         from ClassifierContext import ClassifierContext
         from ImgDataGenerator import ImgDataGenerator
+
+        from SemanticGraph import SemanticGraph
         from SemanticCorrection import SemanticCorrection
+        from PairCorrection import PairCorrection
 
         classifier_context = ClassifierContext()
         cnn = ConvolutionalNeuralNetwork.load(args.model_path)
@@ -124,7 +127,10 @@ def main(command_line=None):
             # probabilities = [0.98, 0.9, 0.98, 0.96, 0.94, 0.94, 0.94, 0.97]
             graph = SemanticGraph.load(args.graph_path)
             semantic_correction = SemanticCorrection(labels, probabilities, graph)
-            labels, probabilities = semantic_correction.execute()
+
+            semantic_correction.set_method(PairCorrection(3, 0.3))
+
+            labels, probabilities = semantic_correction.apply()
 
             print('\nClassification result after semantic correction:')
             print_prediction(labels, probabilities)

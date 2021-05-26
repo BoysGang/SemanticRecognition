@@ -14,7 +14,6 @@ class SemanticGraphFilter:
         for i in range(len(classes)):
             for j in range(i + 1, len(classes)):
                 for path in nx.all_simple_paths(base_graph, classes[i], classes[j], cutoff=depth):
-                    path = list(filter(cls.__is_noun, path))
                     
                     for k in range(len(path) - 1):
                         final_graph.add_node(path[k])
@@ -28,9 +27,6 @@ class SemanticGraphFilter:
         classes = cls.__classes_preproccesing(base_graph, classes)
 
         suggested = []
-
-        for label in classes:
-            [suggested.append(n) for n in base_graph.neighbors(label) if cls.__is_noun(n)]
 
         for i in range(len(classes)):
             for j in range(i + 1, len(classes)):
