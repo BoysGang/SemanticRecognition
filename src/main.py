@@ -85,6 +85,7 @@ def main(command_line=None):
     
     if args.command == "train":
         from ConvolutionalNeuralNetwork import ConvolutionalNeuralNetwork
+        from BagOfVisualWords import BagOfVisualWords
         from ClassifierContext import ClassifierContext
         from ImgDataGenerator import ImgDataGenerator
 
@@ -97,7 +98,8 @@ def main(command_line=None):
 
         img_data_generator = ImgDataGenerator(args.data_path, resize_to=(images_width, images_height), rotation_range=40, horizontal_flip=True)
 
-        cnn = ConvolutionalNeuralNetwork(epochs=epochs, acceleration=True)
+        # cnn = ConvolutionalNeuralNetwork(epochs=epochs, acceleration=True)
+        cnn = BagOfVisualWords()
 
         classifier_context = ClassifierContext()
         classifier_context.setClassifier(cnn)
@@ -106,6 +108,7 @@ def main(command_line=None):
     
     elif args.command == 'predict':
         from ConvolutionalNeuralNetwork import ConvolutionalNeuralNetwork
+        from BagOfVisualWords import BagOfVisualWords
         from ClassifierContext import ClassifierContext
         from ImgDataGenerator import ImgDataGenerator
 
@@ -114,7 +117,7 @@ def main(command_line=None):
         from PairCorrection import PairCorrection
 
         classifier_context = ClassifierContext()
-        cnn = ConvolutionalNeuralNetwork.load(args.model_path)
+        cnn = BagOfVisualWords.load(args.model_path)
         classifier_context.setClassifier(cnn)
 
         labels, probabilities = classifier_context.predict(args.img_path)

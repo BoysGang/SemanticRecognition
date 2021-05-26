@@ -10,13 +10,11 @@ class SemanticGraph(nx.Graph):
     def read_from_dictionary(self, dict_path):
         for line in open(dict_path, 'r', encoding="utf8"):
             line = line.rstrip()
-            line = line.split("\t")
-            line[2] = float(line[2].replace(',', '.'))
+            line = line.split(" ")
             
-            if (line[2] == 0.6):
-                self.add_node(line[0])
-                self.add_node(line[1])
-                self.add_edge(line[0], line[1])
+            self.add_node(line[0])
+            self.add_node(line[1])
+            self.add_edge(line[0], line[1])
 
         return self
 

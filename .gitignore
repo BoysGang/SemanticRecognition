@@ -126,4 +126,5 @@ dmypy.json
 
 model*/
 data/
-graph/
+graphs/
+urls/
