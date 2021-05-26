@@ -115,6 +115,7 @@ def main(command_line=None):
         from SemanticGraph import SemanticGraph
         from SemanticCorrection import SemanticCorrection
         from PairCorrection import PairCorrection
+        from SingleCorrection import SingleCorrection
 
         classifier_context = ClassifierContext()
         cnn = BagOfVisualWords.load(args.model_path)
@@ -131,7 +132,7 @@ def main(command_line=None):
             graph = SemanticGraph.load(args.graph_path)
             semantic_correction = SemanticCorrection(labels, probabilities, graph)
 
-            semantic_correction.set_method(PairCorrection())
+            semantic_correction.set_method(SingleCorrection())
 
             labels, probabilities = semantic_correction.apply()
 

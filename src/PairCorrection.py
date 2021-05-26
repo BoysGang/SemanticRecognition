@@ -45,8 +45,7 @@ class PairCorrection(CorrectionMethod):
             cluster_probs.append(prob_sum)
 
         # normalization
-        max_cluster_prob = max(cluster_probs)
-        normalized_cluster_probs = list(map(lambda x: x / max_cluster_prob, cluster_probs))
+        normalized_cluster_probs = self._normalize(cluster_probs)
 
         # new results labels
         cluster_labels = list()
