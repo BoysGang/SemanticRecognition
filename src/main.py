@@ -41,6 +41,7 @@ def main(command_line=None):
 
     filter_depth = int(config['FILTER_DEPTH'])
     suggest_depth = int(config['SUGGEST_DEPTH'])
+    print_paths = bool(config['PRINT_PATHS'])
     graphs_path = config['GRAPHS_PATH']
 
     r = int(config['RADIUS'])
@@ -88,9 +89,10 @@ def main(command_line=None):
     suggest_parser = graph_subparsers.add_parser('suggest', help=suggest_msg, description=suggest_msg)
     suggest_parser.add_argument('dictionary_path', help='dictionary of semantic relationships, ' +
                 'each line contains an edge of the graph')
-    suggest_parser.add_argument('classes_list', help='list of classes for which to suggest', nargs='+', type=str)
-    suggest_parser.add_argument('--depth', help='depth of the path when looking for ' +
-                f'relationships between existing classes, default value is {suggest_depth}', type=int)
+    suggest_parser.add_argument('classes_list', help='list of classes for which to suggest',
+                nargs='+', type=str)
+    suggest_parser.add_argument('--print_paths', help='if specified shortest paths ' +
+                'between concepts will be printed', action='store_true')
 
     # parse cli arguments
     args = parser.parse_args(command_line)
@@ -190,14 +192,14 @@ def main(command_line=None):
         from SemanticGraph import SemanticGraph
         from SemanticGraphFilter import SemanticGraphFilter
 
-        if args.depth:
-            suggest_depth = args.depth
+        if args.print_paths:
+            print_paths = print_paths
 
         base = SemanticGraph()
         base.read_from_dictionary(args.dictionary_path)
         print("Suggesting for clasess:", args.classes_list)
 
-        SemanticGraphFilter.suggest_classifiers(base, args.classes_list, suggest_depth)
+        SemanticGraphFilter.suggest_classifiers(base, args.classes_list, print_paths)
 
 
 if __name__ == '__main__':

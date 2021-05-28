@@ -23,23 +23,31 @@ class SemanticGraphFilter:
         return final_graph
 
     @classmethod
-    def suggest_classifiers(cls, base_graph, classes, depth=3):
+    def suggest_classifiers(cls, base_graph, classes, print_paths=False):
         classes = cls.__classes_preproccesing(base_graph, classes)
-
         suggested = []
 
+        # for one class suggest neighbors only 
+        if len(classes) == 1:
+            [suggested.append(n) for n in base_graph.neighbors(classes[0]) if cls.__is_noun(n)]
+        elif print_paths:
+            print("Shortest paths between classes:")
+
+        # for two or more classes suggest by shortest paths
         for i in range(len(classes)):
             for j in range(i + 1, len(classes)):
-                for path in nx.all_simple_paths(base_graph, classes[i], classes[j], cutoff=depth):
-                    path = list(filter(cls.__is_noun, path))
+                for path in nx.all_shortest_paths(base_graph, classes[i], classes[j]):
+                    if print_paths:
+                        print(path)
                     
+                    path = list(filter(cls.__is_noun, path))
                     suggested.extend(path)
 
         suggested = set(suggested)
         for cl in classes:
             suggested.discard(cl)
         
-        print("Related semantic classes:")
+        print("\nRelated semantic classes:")
         print(suggested)
 
     @classmethod
