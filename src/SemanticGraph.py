@@ -19,7 +19,7 @@ class SemanticGraph(nx.Graph):
         return self
 
     def save(self, path):
-        joblib.dump(self, path)
+        joblib.dump(self, path + '.pkl')
 
     @classmethod
     def load(cls, pickle_path):

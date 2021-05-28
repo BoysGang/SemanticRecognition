@@ -1,5 +1,7 @@
 import numpy as np
 import joblib
+import os.path
+import os
 
 import cv2
 from scipy.cluster.vq import kmeans, vq
@@ -45,7 +47,7 @@ class BagOfVisualWords(ImageClassifier):
         X_train, self.__vocabulary = self.__extract_features(descriptors, k=self.__clusters_num)
 
         # Train the Linear SVM
-        self.__model = OneVsRestClassifier(SVC(kernel='linear',probability=True, max_iter=10000), n_jobs=-1)
+        self.__model = OneVsRestClassifier(SVC(kernel='linear',probability=True, max_iter=-1), n_jobs=-1)
         self.__model.fit(X_train, y_train)
 
         # Validation
@@ -86,6 +88,9 @@ class BagOfVisualWords(ImageClassifier):
         return self.__labels, probabilities[0]
 
     def save(self, path):
+        if not os.path.exists(path):
+            os.makedirs(path)
+
         joblib.dump((self.__model, 
                         self.__labels, 
                         self.__clusters_num, 
@@ -93,11 +98,11 @@ class BagOfVisualWords(ImageClassifier):
                         self.__extractor_max_features,
                         self.__scaler,
                         self._img_loader), 
-                    path,)
+                    os.path.join(path, 'bovw.pkl'))
 
     @classmethod
     def load(cls, path):
-        model, labels, clusters_num, voc, max_features, scl, loader = joblib.load(path)
+        model, labels, clusters_num, voc, max_features, scl, loader = joblib.load(os.path.join(path, 'bovw.pkl'))
         return BagOfVisualWords(max_features, clusters_num, model, labels, voc, scl, loader)
 
     def __get_data(self, generator):

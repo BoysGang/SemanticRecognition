@@ -13,7 +13,7 @@ class ImgDataGenerator:
                  color_mode='grayscale',
                  validation_split=0.2,
                  rotation_range=0,
-                 shear_range=0.2,
+                 shear_range=0,
                  horizontal_flip=False,
                  batch_size=64):
 

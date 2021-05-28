@@ -5,7 +5,7 @@ from ImageClassifier import ImageClassifier
 from ImgDataGenerator import ImgDataGenerator
 
 class ClassifierContext:
-    def setClassifier(self, classifier: ImageClassifier):
+    def set_classifier(self, classifier: ImageClassifier):
         self.__classifier = classifier
 
     def fit(self, img_data_generator):
