@@ -31,7 +31,6 @@ def main(command_line=None):
     batch_size = int(config['BATCH_SIZE'])
 
     training_data_path = config['TRAINING_DATA_PATH']
-
     models_path = config['MODELS_PATH']
 
     max_features = int(config['MAX_FEATURES'])
@@ -56,34 +55,19 @@ def main(command_line=None):
     # training
     train_help_msg = 'train model for image classification'
     train_parser = subprasers.add_parser('train', help=train_help_msg, description=train_help_msg)
-    train_parser.add_argument('classifier', help='classifier (cnn, bovw)')
-    train_parser.add_argument('model_name', help='name for model')
-    # train_parser.add_argument('data_path', help='folder with training data, ' +
-    #             'images of each class should be stored in a subfolder named after this class')
-    # train_parser.add_argument('model_path', help='file to store trained model')
-    # train_parser.add_argument('--width',
-    #             help=f'width to which the images will be resized, default value is {images_width}',
-    #             type=int)
-    # train_parser.add_argument('--height',
-    #             help=f'height to which the images will be resized, default value is {images_height}',
-    #             type=int)
-    # train_parser.add_argument('--epochs',
-    #             help=f'number of epochs for training, default value is {epochs}',
-    #             type=int)
+    train_parser.add_argument('classifier', help='classifier type (available: cnn, bovw)')
+    train_parser.add_argument('model_name', help='trained model name, to store it in the default location')
     
     # prediction
     predict_help_msg = 'classify image by trained model'
     predict_parser = subprasers.add_parser('predict', help=predict_help_msg, description=predict_help_msg)
-    predict_parser.add_argument('classifier', help='classifier (cnn, bovw)')
-    predict_parser.add_argument('model_name', help='name for model')
+    predict_parser.add_argument('classifier', help='trained classifier type (cnn, bovw)')
+    predict_parser.add_argument('model_name', help='trained model name, to perform the classification')
     predict_parser.add_argument('img_path', help='path to the image for classification')
     predict_parser.add_argument('--graph_name',
-            help=f'graph name',)
+            help=f'graph name for semantic correction (if defined then semantic correction will be used)',)
     predict_parser.add_argument('--correction_method',
-            help=f'correction method (PairCorrection, SingleCorrection)',)
-    # predict_parser.add_argument('model_path', help='path to trained model')
-    # predict_parser.add_argument('--graph_path',
-    #             help=f'path to the semantic graph (if defined then semantic correction will be used)',)
+            help=f'method to perform semantic correction (available: PairCorrection, SingleCorrection)',)
     
     # graph
     graph_help_msg = 'semantic graph module' 
@@ -97,13 +81,7 @@ def main(command_line=None):
     graph_filter_parser.add_argument('dictionary_path', help='dictionary of semantic relationships, ' +
                 'each line contains an edge of the graph')
     graph_filter_parser.add_argument('graph_name',
-            help=f'graph name',)
-    # graph_filter_parser.add_argument('data_path', help='folder with training data, ' +
-    #             'images of each class should be stored in a subfolder named after this class')
-    # graph_filter_parser.add_argument('store_path', help='file path to store optimazed graph')
-    # graph_filter_parser.add_argument('--depth', help='depth of the path when looking for ' +
-    #             f'relationships between existing classes, default value is {filter_depth}', type=int)
-    # graph_filter_parser.add_argument('--image_path', help='path to store graph image')
+                help=f'graph name, to store it in the default location',)
 
     # graph suggest
     suggest_msg = 'suggest semantic related classes'
@@ -122,13 +100,6 @@ def main(command_line=None):
         from BagOfVisualWords import BagOfVisualWords
         from ClassifierContext import ClassifierContext
         from ImgDataGenerator import ImgDataGenerator
-
-        # if args.width:
-        #     images_width = args.width
-        # if args.height:
-        #     images_height = args.height
-        # if args.epochs:
-        #     epochs = args.epochs
 
         img_data_generator = ImgDataGenerator(
             training_data_path, 
@@ -203,9 +174,6 @@ def main(command_line=None):
     elif args.command == 'filter':
         from SemanticGraph import SemanticGraph
         from SemanticGraphFilter import SemanticGraphFilter
-
-        # if args.depth:
-        #     filter_depth = args.depth
 
         base = SemanticGraph()
         base.read_from_dictionary(args.dictionary_path)
