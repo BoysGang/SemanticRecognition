@@ -41,12 +41,14 @@ def main(command_line=None):
 
     filter_depth = int(config['FILTER_DEPTH'])
     suggest_depth = int(config['SUGGEST_DEPTH'])
-    print_paths = bool(config['PRINT_PATHS'])
     graphs_path = config['GRAPHS_PATH']
 
     r = int(config['RADIUS'])
     damping = float(config['DAMPING'])
     threshold = float(config['THRESHOLD'])
+
+    classifier_types = ['cnn', 'bovw']
+    correction_methods= ['PairCorrection', 'SingleCorrection']
     
     # cli parser
     parser = argparse.ArgumentParser(description='Sematic Recognition by BoysGang')
@@ -56,19 +58,20 @@ def main(command_line=None):
     # training
     train_help_msg = 'train model for image classification'
     train_parser = subprasers.add_parser('train', help=train_help_msg, description=train_help_msg)
-    train_parser.add_argument('classifier', help='classifier type (available: cnn, bovw)')
+    train_parser.add_argument('classifier', help='classifier type', choices=classifier_types)
     train_parser.add_argument('model_name', help='trained model name, to store it in the default location')
     
     # prediction
     predict_help_msg = 'classify image by trained model'
     predict_parser = subprasers.add_parser('predict', help=predict_help_msg, description=predict_help_msg)
-    predict_parser.add_argument('classifier', help='trained classifier type (cnn, bovw)')
+    predict_parser.add_argument('classifier', help=f'trained classifier type', choices=classifier_types)
     predict_parser.add_argument('model_name', help='trained model name, to perform the classification')
     predict_parser.add_argument('img_path', help='path to the image for classification')
-    predict_parser.add_argument('--graph_name',
-            help=f'graph name for semantic correction (if defined then semantic correction will be used)',)
-    predict_parser.add_argument('--correction_method',
-            help=f'method to perform semantic correction (available: PairCorrection, SingleCorrection)',)
+    predict_parser.add_argument('-g', '--graph_name',
+                help=f'graph name for semantic correction (if defined then semantic correction will be used)',)
+    predict_parser.add_argument('-c', '--correction_method',
+                help=f'method to perform semantic correction',
+                choices=correction_methods)
     
     # graph
     graph_help_msg = 'semantic graph module' 
@@ -91,7 +94,7 @@ def main(command_line=None):
                 'each line contains an edge of the graph')
     suggest_parser.add_argument('classes_list', help='list of classes for which to suggest',
                 nargs='+', type=str)
-    suggest_parser.add_argument('--print_paths', help='if specified shortest paths ' +
+    suggest_parser.add_argument('-p', '--print_paths', help='if specified shortest paths ' +
                 'between concepts will be printed', action='store_true')
 
     # parse cli arguments
@@ -192,14 +195,11 @@ def main(command_line=None):
         from SemanticGraph import SemanticGraph
         from SemanticGraphFilter import SemanticGraphFilter
 
-        if args.print_paths:
-            print_paths = print_paths
-
         base = SemanticGraph()
         base.read_from_dictionary(args.dictionary_path)
         print("Suggesting for clasess:", args.classes_list)
 
-        SemanticGraphFilter.suggest_classifiers(base, args.classes_list, print_paths)
+        SemanticGraphFilter.suggest_classifiers(base, args.classes_list, args.print_paths)
 
 
 if __name__ == '__main__':
