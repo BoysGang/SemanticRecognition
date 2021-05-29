@@ -1,39 +1,18 @@
 import networkx as nx
+import random
 
 from SemanticGraph import SemanticGraph
 
 
-class SemanticGraphFilter:
+class SemanticSuggester:
     @classmethod
-    def filter(cls, base_graph, classes, depth=3):
-        # get required subgraph
-        final_graph = SemanticGraph()
-
-        classes = cls.__classes_preproccesing(base_graph, classes)
-
-        for i in range(len(classes)):
-            for j in range(i + 1, len(classes)):
-                for path in nx.all_simple_paths(base_graph, classes[i], classes[j], cutoff=depth):
-                    
-                    for k in range(len(path) - 1):
-                        final_graph.add_node(path[k])
-                        final_graph.add_node(path[k + 1])
-                        final_graph.add_edge(path[k], path[k + 1])
-
-        return final_graph
-
-    @classmethod
-    def suggest_classifiers(cls, base_graph, classes, print_paths=False):
+    def suggest_by_shortest_paths(cls, base_graph, classes, print_paths=False):
         classes = cls.__classes_preproccesing(base_graph, classes)
         suggested = []
 
-        # for one class suggest neighbors only 
-        if len(classes) == 1:
-            [suggested.append(n) for n in base_graph.neighbors(classes[0]) if cls.__is_noun(n)]
-        elif print_paths:
+        if print_paths:
             print("Shortest paths between classes:")
 
-        # for two or more classes suggest by shortest paths
         for i in range(len(classes)):
             for j in range(i + 1, len(classes)):
                 for path in nx.all_shortest_paths(base_graph, classes[i], classes[j]):
@@ -49,6 +28,29 @@ class SemanticGraphFilter:
         
         print("\nRelated semantic classes:")
         print(suggested)
+
+    @classmethod
+    def suggest_neighbors_on_depth(cls, base_graph, classes, depth, output_length=10):
+        classes = cls.__classes_preproccesing(base_graph, classes)
+
+        print("\nNeighbors on depth", str(depth) + ":")
+
+        for i in range(len(classes)):
+            neighbors = cls.__get_neighbors_on_depth(base_graph, classes[i], depth)
+            neighbors = list(filter(cls.__is_noun, neighbors))
+            neighbors = set(neighbors)
+            neighbors = set(random.sample(neighbors, output_length)) 
+
+            print()
+            print(classes[i], ":", neighbors)
+            
+
+    @classmethod
+    def __get_neighbors_on_depth(cls, graph, node, depth):
+        path_lengths = nx.single_source_shortest_path_length(graph, node, depth)
+        neighbors = [node for node, length in path_lengths.items()
+                        if length == depth]
+        return neighbors
 
     @classmethod
     def __is_noun(cls, word):

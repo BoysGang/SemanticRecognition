@@ -42,6 +42,7 @@ def main(command_line=None):
     filter_depth = int(config['FILTER_DEPTH'])
     suggest_depth = int(config['SUGGEST_DEPTH'])
     graphs_path = config['GRAPHS_PATH']
+    suggest_output = int(config['SUGGEST_OUTPUT_NUMBER'])
 
     r = int(config['RADIUS'])
     damping = float(config['DAMPING'])
@@ -94,8 +95,14 @@ def main(command_line=None):
                 'each line contains an edge of the graph')
     suggest_parser.add_argument('classes_list', help='list of classes for which to suggest',
                 nargs='+', type=str)
-    suggest_parser.add_argument('-p', '--print_paths', help='if specified shortest paths ' +
+    suggest_parser.add_argument('-p', '--from_paths', help='get related semantic concepts ' +
+                'based on shortest paths between them (this method used by default)', action='store_true')
+    suggest_parser.add_argument('-n', '--neighbors', help='get related semantic concepts ' +
+                'for each nodes based on their d-order neighbors', action='store_true')
+    suggest_parser.add_argument('-s', '--show_paths', help='if specified shortest paths ' +
                 'between concepts will be printed', action='store_true')
+    suggest_parser.add_argument('-d', '--depth', help='the depth to look for the neighbors ' +
+                f'default value is {suggest_depth}', type=int)
 
     # parse cli arguments
     args = parser.parse_args(command_line)
@@ -178,28 +185,34 @@ def main(command_line=None):
 
     elif args.command == 'filter':
         from SemanticGraph import SemanticGraph
-        from SemanticGraphFilter import SemanticGraphFilter
 
         base = SemanticGraph()
         base.read_from_dictionary(args.dictionary_path)
         classes = os.listdir(training_data_path)
 
         print("Filtering graph for clasess:", classes)
-        
-        filtered = SemanticGraphFilter.filter(base, classes, filter_depth)
-        filtered.save(os.path.join(graphs_path, args.graph_name))
+        base.filter(classes, filter_depth)
+        base.save(os.path.join(graphs_path, args.graph_name))
 
         print("Graph successfully stored to", graphs_path)
 
     elif args.command == 'suggest':
         from SemanticGraph import SemanticGraph
-        from SemanticGraphFilter import SemanticGraphFilter
+        from SemanticSuggester import SemanticSuggester
 
         base = SemanticGraph()
         base.read_from_dictionary(args.dictionary_path)
         print("Suggesting for clasess:", args.classes_list)
 
-        SemanticGraphFilter.suggest_classifiers(base, args.classes_list, args.print_paths)
+        if args.neighbors:
+            if args.depth:
+                suggest_depth = args.depth
+            
+            SemanticSuggester.suggest_neighbors_on_depth(base, args.classes_list, suggest_depth, suggest_output)
+        else:
+             SemanticSuggester.suggest_by_shortest_paths(base, args.classes_list, args.show_paths)
+
+       
 
 
 if __name__ == '__main__':

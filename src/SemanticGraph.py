@@ -18,6 +18,35 @@ class SemanticGraph(nx.Graph):
 
         return self
 
+    def filter(self, classes, depth=3):
+        # classes preproccesing
+        classes = [x.lower() for x in classes]
+        
+        temp = []
+        for cl in classes:
+            if self.has_node(cl):
+                temp.append(cl)
+            else:
+                print("base graph has no node:", cl)
+        
+        classes = temp
+
+        # get required subgraph
+        final_graph = SemanticGraph()
+
+        for i in range(len(classes)):
+            for j in range(i + 1, len(classes)):
+                for path in nx.all_simple_paths(self, classes[i], classes[j], cutoff=depth):
+                    
+                    for k in range(len(path) - 1):
+                        final_graph.add_node(path[k])
+                        final_graph.add_node(path[k + 1])
+                        final_graph.add_edge(path[k], path[k + 1])
+
+        self.clear()
+        self.add_nodes_from(final_graph.nodes)
+        self.add_edges_from(final_graph.edges)
+
     def save(self, path):
         joblib.dump(self, path + '.pkl')
 
