@@ -125,6 +125,7 @@ venv.bak/
 dmypy.json
 
 model*/
-data/
+data*/
+test/
 graphs/
 urls/

@@ -26,11 +26,12 @@ def main(command_line=None):
     color_mode = config['COLOR_MODE']
     validation_split = float(config['VALIDATION_SPLIT'])
     rotation_range = int(config['ROTATION_RANGE'])
-    shear_range = int(config['SHEAR_RANGE'])
+    shear_range = float(config['SHEAR_RANGE'])
     horizontal_flip = bool(config['HORIZONTAL_FLIP'])
     batch_size = int(config['BATCH_SIZE'])
 
     training_data_path = config['TRAINING_DATA_PATH']
+    test_data_path = config['TEST_DATA_PATH']
     models_path = config['MODELS_PATH']
 
     max_features = int(config['MAX_FEATURES'])
@@ -114,7 +115,8 @@ def main(command_line=None):
         from ImgDataGenerator import ImgDataGenerator
 
         img_data_generator = ImgDataGenerator(
-            training_data_path, 
+            training_data_path,
+            test_data_path,
             resize_to=(images_width, images_height), 
             color_mode=color_mode,
             validation_split=validation_split,

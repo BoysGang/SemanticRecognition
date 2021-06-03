@@ -37,6 +37,7 @@ class ConvolutionalNeuralNetwork(ImageClassifier):
 
         train_generator = img_data_generator.train_generator
         validation_generator = img_data_generator.validation_generator
+        test_generator = img_data_generator.test_generator
 
         batch_size = img_data_generator.batch_size
 
@@ -45,6 +46,7 @@ class ConvolutionalNeuralNetwork(ImageClassifier):
         shape = train_generator.image_shape
         train_samples_num = train_generator.samples
         validation_samples_num = validation_generator.samples
+        test_samples_num = test_generator.samples
 
         print('Batch size:', batch_size)
         print('Number of samples:', train_samples_num)
@@ -55,13 +57,16 @@ class ConvolutionalNeuralNetwork(ImageClassifier):
         output_neurons = len(self.__labels)
 
         self.__model = models.Sequential([
-            layers.Conv2D(64, (3,3), activation='relu', input_shape=shape, kernel_regularizer=regularizers.l2(l=0.01)),
-            layers.MaxPooling2D(2, 2),
+            layers.Conv2D(filters=64, kernel_size=(3, 3), activation='relu', input_shape=shape),
+            layers.MaxPooling2D((2, 2)),
+            
+            layers.Conv2D(filters=64, kernel_size=(3, 3), activation='relu'),
+            layers.MaxPooling2D((2, 2)),
 
-            layers.Conv2D(128, (3, 3), activation='relu', kernel_regularizer=regularizers.l2(l=0.01)),
-            layers.MaxPooling2D(2, 2),
-
-            layers.Dropout(0.4),
+            layers.Conv2D(filters=64, kernel_size=(3, 3), activation='relu'),
+            layers.MaxPooling2D((2, 2)),
+            layers.Dropout(0.5),
+            
             layers.Flatten(),
             layers.Dense(128, activation='relu'),
             layers.Dropout(0.2),
@@ -82,14 +87,14 @@ class ConvolutionalNeuralNetwork(ImageClassifier):
                 validation_steps=validation_samples_num // batch_size)
 
         # Confusion Matrix and Classification Report
-        Y_pred = self.__model.predict(validation_generator, validation_samples_num // batch_size+1)
+        Y_pred = self.__model.predict(test_generator, test_samples_num // batch_size+1)
         y_pred = np.argmax(Y_pred, axis=1)
         
-        print('\nConfusion Matrix:')
-        print(confusion_matrix(validation_generator.classes, y_pred))
+        print('\nConfusion Matrix:\n')
+        print(confusion_matrix(test_generator.classes, y_pred))
         
         print('\nClassification Report:')
-        print(classification_report(validation_generator.classes, y_pred, target_names=self.__labels))
+        print(classification_report(test_generator.classes, y_pred, target_names=self.__labels))
 
         if self.__plot_fit_hist:
             self.__plot_hist(history)
