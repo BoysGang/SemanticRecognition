@@ -4,7 +4,7 @@ import os.path
 import os
 
 import cv2
-from scipy.cluster.vq import kmeans, vq
+from scipy.cluster.vq import kmeans, vq, whiten
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.multiclass import OneVsRestClassifier
@@ -23,7 +23,7 @@ class BagOfVisualWords(ImageClassifier):
         self.__vocabulary = voc
         self.__clusters_num = clusters_num
         self.__extractor_max_features = max_features
-        self.__feature_extractor = cv2.SIFT_create(max_features)
+        self.__feature_extractor = cv2.SIFT_create()
         self.__scaler = scaler
         self._img_loader = img_loader
     
@@ -31,7 +31,7 @@ class BagOfVisualWords(ImageClassifier):
         self._init_img_loader(img_data_generator)
 
         train_generator = img_data_generator.train_generator
-        validation_generator = img_data_generator.validation_generator
+        test_generator = img_data_generator.test_generator
 
         self.__labels = list(train_generator.class_indices.keys())
 
@@ -43,6 +43,7 @@ class BagOfVisualWords(ImageClassifier):
         print('Labels:', self.__labels)
         print()
 
+        # Train
         descriptors, y_train = self.__get_data(train_generator)
         X_train, self.__vocabulary = self.__extract_features(descriptors, k=self.__clusters_num)
 
@@ -50,20 +51,20 @@ class BagOfVisualWords(ImageClassifier):
         self.__model = OneVsRestClassifier(SVC(kernel='linear',probability=True, max_iter=-1), n_jobs=-1)
         self.__model.fit(X_train, y_train)
 
-        # Validation
-        test_descriptors, y_test = self.__get_data(validation_generator)
+        # Test
+        test_descriptors, y_test = self.__get_data(test_generator)
         X_test, _ = self.__extract_features(test_descriptors,
                                             voc=self.__vocabulary, 
                                             k=self.__clusters_num)
 
         y_pred = self.__model.predict_proba(X_test)
-        y_a = self.__model.predict(X_test)
 
         y_pred = [self.__labels[y.argmax()] for y in y_pred]
         y_test = [self.__labels[y.argmax()] for y in y_test]
 
-        print('\nConfusion Matrix:')
+        print('\nConfusion Matrix:\n')
         print(confusion_matrix(y_test, y_pred))
+        
         print('\nReport:')
         print(classification_report(y_test, y_pred))
 
@@ -127,11 +128,12 @@ class BagOfVisualWords(ImageClassifier):
         image_data *= 255
         image8bit = cv2.normalize(image_data, None, 0, 255, cv2.NORM_MINMAX).astype('uint8')
         _, des = self.__feature_extractor.detectAndCompute(image8bit, None)
+
         return des
 
     def __extract_features(self, descriptors, voc=None, scaler=None, k=200):
         # Stack all the descriptors vertically in a numpy array
-        des = descriptors[0]
+        des = np.array(descriptors[0])
         for descriptor in descriptors[1:]:
             des = np.vstack((des, descriptor))
 
@@ -140,7 +142,7 @@ class BagOfVisualWords(ImageClassifier):
 
         if voc is None:
             # Perform k-means clustering and vector quantization
-            voc, _ = kmeans(descriptors_float, k, 1)
+            voc, _ = kmeans(whiten(descriptors_float), k, 1)
 
         # Calculate the histogram of features and represent them as vector
         # vq Assigns codes from a code book to observations.

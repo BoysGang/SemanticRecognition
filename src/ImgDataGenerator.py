@@ -8,7 +8,8 @@ from tensorflow.keras.preprocessing import image
 
 class ImgDataGenerator:
     def __init__(self,
-                 data_path,
+                 train_path,
+                 test_path,
                  resize_to=(80, 80),
                  color_mode='grayscale',
                  validation_split=0.2,
@@ -17,7 +18,8 @@ class ImgDataGenerator:
                  horizontal_flip=False,
                  batch_size=64):
 
-        self.__data_path = data_path
+        self.__train_path = train_path
+        self.__test_path = test_path
         self.__image_scale = resize_to
         self.__color_mode = color_mode
         self.__validation_split = validation_split
@@ -26,7 +28,7 @@ class ImgDataGenerator:
         self.__horizontal_flip = horizontal_flip
         self.__batch_size = batch_size
 
-        self.__image_data_generator = ImageDataGenerator(
+        self.__train_data_generator = ImageDataGenerator(
             rescale=1./255,
             rotation_range=rotation_range,
             shear_range=shear_range,
@@ -35,8 +37,10 @@ class ImgDataGenerator:
             fill_mode='nearest'
         )
 
-        self.__train_generator = self.__image_data_generator.flow_from_directory(
-            data_path,
+        self.__test_data_generator = ImageDataGenerator(rescale=1./255)
+
+        self.__train_generator = self.__train_data_generator.flow_from_directory(
+            train_path,
             target_size=resize_to,
             class_mode='categorical',
             batch_size=batch_size,
@@ -45,14 +49,23 @@ class ImgDataGenerator:
             subset="training"
         )
 
-        self.__validation_generator = self.__image_data_generator.flow_from_directory(
-            data_path,
+        self.__validation_generator = self.__train_data_generator.flow_from_directory(
+            train_path,
             target_size=resize_to,
             class_mode='categorical',
             batch_size=batch_size,
             color_mode=color_mode,
             shuffle=True,
             subset="validation"
+        )
+
+        self.__test_generator = self.__test_data_generator.flow_from_directory(
+            test_path,
+            target_size=resize_to,
+            class_mode='categorical',
+            batch_size=batch_size,
+            color_mode=color_mode,
+            shuffle=False
         )
 
     @property
@@ -62,6 +75,10 @@ class ImgDataGenerator:
     @property
     def validation_generator(self):
         return self.__validation_generator
+
+    @property
+    def test_generator(self):
+        return self.__test_generator
 
     @property
     def batch_size(self):
