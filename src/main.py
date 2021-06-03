@@ -1,7 +1,7 @@
 import argparse
 import os
-import dotenv
 
+import dotenv
 from prettytable import PrettyTable
 
 
@@ -49,7 +49,7 @@ def main(command_line=None):
     threshold = float(config['THRESHOLD'])
 
     classifier_types = ['cnn', 'bovw']
-    correction_methods= ['PairCorrection', 'SingleCorrection']
+    correction_methods= ['PairCorrection', 'SingleCorrection', 'CollectiveCorrection']
     
     # cli parser
     parser = argparse.ArgumentParser(description='Sematic Recognition by BoysGang')
@@ -108,9 +108,9 @@ def main(command_line=None):
     args = parser.parse_args(command_line)
     
     if args.command == "train":
-        from ConvolutionalNeuralNetwork import ConvolutionalNeuralNetwork
         from BagOfVisualWords import BagOfVisualWords
         from ClassifierContext import ClassifierContext
+        from ConvolutionalNeuralNetwork import ConvolutionalNeuralNetwork
         from ImgDataGenerator import ImgDataGenerator
 
         img_data_generator = ImgDataGenerator(
@@ -143,14 +143,14 @@ def main(command_line=None):
         classifier_context.save(os.path.join(models_path, args.model_name))
     
     elif args.command == 'predict':
-        from ConvolutionalNeuralNetwork import ConvolutionalNeuralNetwork
         from BagOfVisualWords import BagOfVisualWords
         from ClassifierContext import ClassifierContext
+        from ConvolutionalNeuralNetwork import ConvolutionalNeuralNetwork
         from ImgDataGenerator import ImgDataGenerator
-
-        from SemanticGraph import SemanticGraph
-        from SemanticCorrection import SemanticCorrection
         from PairCorrection import PairCorrection
+        from CollectiveCorrection import CollectiveCorrection
+        from SemanticCorrection import SemanticCorrection
+        from SemanticGraph import SemanticGraph
         from SingleCorrection import SingleCorrection
 
         classifier_context = ClassifierContext()
@@ -177,6 +177,8 @@ def main(command_line=None):
                 semantic_correction.set_method(SingleCorrection(r, damping))
             elif args.correction_method == 'PairCorrection':
                 semantic_correction.set_method(PairCorrection(r, threshold))
+            elif args.correction_method == 'CollectiveCorrection':
+                semantic_correction.set_method(CollectiveCorrection(r, threshold))
 
             labels, probabilities = semantic_correction.apply()
 

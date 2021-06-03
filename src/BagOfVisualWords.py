@@ -56,7 +56,8 @@ class BagOfVisualWords(ImageClassifier):
                                             voc=self.__vocabulary, 
                                             k=self.__clusters_num)
 
-        y_pred = self.__model.predict(X_test)
+        y_pred = self.__model.predict_proba(X_test)
+        y_a = self.__model.predict(X_test)
 
         y_pred = [self.__labels[y.argmax()] for y in y_pred]
         y_test = [self.__labels[y.argmax()] for y in y_test]
