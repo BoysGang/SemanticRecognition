@@ -6,9 +6,10 @@ from prettytable import PrettyTable
 
 
 def config():
+    # Turn off tenserflow log messsages
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-
+# Print classification results table 
 def print_prediction(labels, probabilities):
     table = PrettyTable(['Class', 'Probability'])
     for i in range(len(labels)):
@@ -17,7 +18,8 @@ def print_prediction(labels, probabilities):
     print(table)
 
 
-def main(command_line=None):    
+def main(command_line=None):
+    # Get params from config file 
     config = dotenv.dotenv_values('.conf')
 
     images_width = int(config['IMAGE_WIDTH'])
@@ -52,18 +54,18 @@ def main(command_line=None):
     classifier_types = ['cnn', 'bovw']
     correction_methods= ['PairCorrection', 'SingleCorrection', 'CollectiveCorrection']
     
-    # cli parser
+    # CLI parser
     parser = argparse.ArgumentParser(description='Sematic Recognition by BoysGang')
     
     subprasers = parser.add_subparsers(dest='command')
     
-    # training
+    # Train command
     train_help_msg = 'train model for image classification'
     train_parser = subprasers.add_parser('train', help=train_help_msg, description=train_help_msg)
     train_parser.add_argument('classifier', help='classifier type', choices=classifier_types)
     train_parser.add_argument('model_name', help='trained model name, to store it in the default location')
     
-    # prediction
+    # Predict command
     predict_help_msg = 'classify image by trained model'
     predict_parser = subprasers.add_parser('predict', help=predict_help_msg, description=predict_help_msg)
     predict_parser.add_argument('classifier', help=f'trained classifier type', choices=classifier_types)
@@ -75,13 +77,13 @@ def main(command_line=None):
                 help=f'method to perform semantic correction',
                 choices=correction_methods)
     
-    # graph
+    # Graph command
     graph_help_msg = 'semantic graph module' 
     graph_parser = subprasers.add_parser('graph', help=graph_help_msg, description=graph_help_msg)
 
     graph_subparsers = graph_parser.add_subparsers(dest='command')
     
-    # graph filter
+    # Graph filter command
     graph_filter_msg = 'optimize the graph for the available classifiers' 
     graph_filter_parser = graph_subparsers.add_parser('filter', help=graph_filter_msg, description=graph_filter_msg)
     graph_filter_parser.add_argument('dictionary_path', help='dictionary of semantic relationships, ' +
@@ -89,7 +91,7 @@ def main(command_line=None):
     graph_filter_parser.add_argument('graph_name',
                 help=f'graph name, to store it in the default location',)
 
-    # graph suggest
+    # Graph suggest command
     suggest_msg = 'suggest semantic related classes'
     suggest_parser = graph_subparsers.add_parser('suggest', help=suggest_msg, description=suggest_msg)
     suggest_parser.add_argument('dictionary_path', help='dictionary of semantic relationships, ' +
@@ -105,7 +107,7 @@ def main(command_line=None):
     suggest_parser.add_argument('-d', '--depth', help='the depth to look for the neighbors ' +
                 f'default value is {suggest_depth}', type=int)
 
-    # parse cli arguments
+    # Parse CLI arguments
     args = parser.parse_args(command_line)
     
     if args.command == "train":
@@ -215,8 +217,6 @@ def main(command_line=None):
             SemanticSuggester.suggest_neighbors_on_depth(base, args.classes_list, suggest_depth, suggest_output)
         else:
              SemanticSuggester.suggest_by_shortest_paths(base, args.classes_list, args.show_paths)
-
-       
 
 
 if __name__ == '__main__':

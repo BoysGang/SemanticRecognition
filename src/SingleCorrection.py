@@ -1,4 +1,5 @@
 import networkx as nx
+
 from CorrectionMethod import CorrectionMethod
 from SemanticGraph import SemanticGraph
 
@@ -11,7 +12,7 @@ class SingleCorrection(CorrectionMethod):
     def execute(self, labels, predictions, semantic_graph: SemanticGraph):
         corrected_predictions = [0] * len(predictions)
         
-        # increase each class probability by close classes probabilities
+        # Increase each class probability by close classes probabilities
         for i in range(len(labels)):
             for j in range(len(labels)):
                 path_length = nx.shortest_path_length(semantic_graph, labels[i], labels[j])
@@ -19,7 +20,7 @@ class SingleCorrection(CorrectionMethod):
                 if path_length <= self.__radius:
                     corrected_predictions[i] += predictions[j] * self.__damping**path_length
             
-        # normalization
+        # Normalization
         corrected_predictions = self._normalize(corrected_predictions)
 
         return labels, corrected_predictions

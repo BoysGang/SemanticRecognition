@@ -14,13 +14,13 @@ class CollectiveCorrection(CorrectionMethod):
         clusters = list()
         merged_clusters = list()
 
-        # do not consider concepts with low probability
+        # Do not consider concepts with low probability
         for i in range(len(labels)):
             if predictions[i] <= self.__threshold:
                 merged_clusters.append([labels[i]])
                 merged_concepts[i] = True
 
-        # compute cluster for each concept
+        # Compute cluster for each concept
         for i in range(len(labels)):
             if not merged_concepts[labels.index(labels[i])]:
                 cluster = []
@@ -33,7 +33,7 @@ class CollectiveCorrection(CorrectionMethod):
 
                 clusters.append(cluster)
 
-        # merging common elem in cluster
+        # Merging common elem in cluster
         for i in range(len(clusters)):
             max_common_num = 0
             elems_to_merge = []
@@ -52,12 +52,12 @@ class CollectiveCorrection(CorrectionMethod):
                     merged_concepts[labels.index(elem)] = True
                 merged_clusters.append(elems_to_merge)
         
-        # add not merged concepts as single concept
+        # Add not merged concepts as single concept
         for i in range(len(merged_concepts)):
             if not merged_concepts[i]:
                 merged_clusters.append([labels[i]])
 
-        # compute clusters prbabilities
+        # Compute clusters prbabilities
         cluster_probs = list()
         for cluster in merged_clusters:
             prob_sum = 0
@@ -68,10 +68,10 @@ class CollectiveCorrection(CorrectionMethod):
 
             cluster_probs.append(prob_sum)
 
-        # normalization
+        # Normalization
         normalized_cluster_probs = self._normalize(cluster_probs)
 
-        # new results labels
+        # Get new results labels
         cluster_labels = list()
         for cluster in merged_clusters:
             cluster_labels.append(', '.join(cluster))

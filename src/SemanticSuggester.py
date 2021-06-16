@@ -1,10 +1,12 @@
-import networkx as nx
 import random
+
+import networkx as nx
 
 from SemanticGraph import SemanticGraph
 
 
 class SemanticSuggester:
+    # Suggesting related concepts based on shortest paths between classes in a graph
     @classmethod
     def suggest_by_shortest_paths(cls, base_graph, classes, print_paths=False):
         classes = cls.__classes_preproccesing(base_graph, classes)
@@ -29,6 +31,7 @@ class SemanticSuggester:
         print("\nRelated semantic classes:")
         print(suggested)
 
+    # Suggesting related concepts for each base class at a given depth
     @classmethod
     def suggest_neighbors_on_depth(cls, base_graph, classes, depth, output_length=10):
         classes = cls.__classes_preproccesing(base_graph, classes)
@@ -44,7 +47,7 @@ class SemanticSuggester:
             print()
             print(classes[i], ":", neighbors)
             
-
+    # Get all neighbors of a vertex in a graph at a given depth
     @classmethod
     def __get_neighbors_on_depth(cls, graph, node, depth):
         path_lengths = nx.single_source_shortest_path_length(graph, node, depth)
@@ -52,10 +55,12 @@ class SemanticSuggester:
                         if length == depth]
         return neighbors
 
+    # Checks if a given concept is a noun
     @classmethod
     def __is_noun(cls, word):
         return word[-2:] != "ть" and word[-1] != "й"
 
+    # Preprocces classes to the form in which they are stored in a graph
     @classmethod
     def __classes_preproccesing(cls, graph, classes):
         classes = [x.lower() for x in classes]
