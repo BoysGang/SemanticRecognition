@@ -19,7 +19,7 @@ class BagOfVisualWords(ImageClassifier):
         super().__init__()
 
         self.__model = model
-        self.__labels = labels
+        self._labels = labels
         self.__vocabulary = voc
         self.__clusters_num = clusters_num
         self.__extractor_max_features = max_features
@@ -33,14 +33,14 @@ class BagOfVisualWords(ImageClassifier):
         train_generator = img_data_generator.train_generator
         test_generator = img_data_generator.test_generator
 
-        self.__labels = list(train_generator.class_indices.keys())
+        self._labels = list(train_generator.class_indices.keys())
 
         shape = train_generator.image_shape
         train_samples_num = train_generator.samples
 
         print('Number of samples: ', train_samples_num)
         print('Image shape: ', shape)
-        print('Labels:', self.__labels)
+        print('Labels:', self._labels)
         print()
 
         # Train
@@ -59,8 +59,8 @@ class BagOfVisualWords(ImageClassifier):
 
         y_pred = self.__model.predict_proba(X_test)
 
-        y_pred = [self.__labels[y.argmax()] for y in y_pred]
-        y_test = [self.__labels[y.argmax()] for y in y_test]
+        y_pred = [self._labels[y.argmax()] for y in y_pred]
+        y_test = [self._labels[y.argmax()] for y in y_test]
 
         print('\nConfusion Matrix:\n')
         print(confusion_matrix(y_test, y_pred))
@@ -87,14 +87,14 @@ class BagOfVisualWords(ImageClassifier):
 
         probabilities = self.__model.predict_proba(features)
 
-        return self.__labels, probabilities[0]
+        return self._labels, probabilities[0]
 
     def save(self, path):
         if not os.path.exists(path):
             os.makedirs(path)
 
         joblib.dump((self.__model, 
-                        self.__labels, 
+                        self._labels, 
                         self.__clusters_num, 
                         self.__vocabulary,
                         self.__extractor_max_features,

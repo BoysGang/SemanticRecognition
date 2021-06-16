@@ -24,7 +24,7 @@ class ConvolutionalNeuralNetwork(ImageClassifier):
         self.__acceleration = acceleration
 
         self.__model = model
-        self.__labels = labels
+        self._labels = labels
         self._img_loader = img_loader
         
         physical_devices = tf.config.list_physical_devices('GPU') 
@@ -41,7 +41,7 @@ class ConvolutionalNeuralNetwork(ImageClassifier):
 
         batch_size = img_data_generator.batch_size
 
-        self.__labels = list(train_generator.class_indices.keys())
+        self._labels = list(train_generator.class_indices.keys())
         
         shape = train_generator.image_shape
         train_samples_num = train_generator.samples
@@ -51,10 +51,10 @@ class ConvolutionalNeuralNetwork(ImageClassifier):
         print('Batch size:', batch_size)
         print('Number of samples:', train_samples_num)
         print('Image shape:', shape)
-        print('Labels:', self.__labels)
+        print('Labels:', self._labels)
         print()
 
-        output_neurons = len(self.__labels)
+        output_neurons = len(self._labels)
 
         self.__model = models.Sequential([
             layers.Conv2D(filters=64, kernel_size=(3, 3), activation='relu', input_shape=shape),
@@ -94,7 +94,7 @@ class ConvolutionalNeuralNetwork(ImageClassifier):
         print(confusion_matrix(test_generator.classes, y_pred))
         
         print('\nClassification Report:')
-        print(classification_report(test_generator.classes, y_pred, target_names=self.__labels))
+        print(classification_report(test_generator.classes, y_pred, target_names=self._labels))
 
         if self.__plot_fit_hist:
             self.__plot_hist(history)
@@ -107,13 +107,13 @@ class ConvolutionalNeuralNetwork(ImageClassifier):
 
         probabilities = self.__model.predict(image, batch_size=10)
 
-        return self.__labels, probabilities[0]
+        return self._labels, probabilities[0]
 
     def save(self, path):
         self.__model.save(path)
 
         joblib.dump(self._img_loader, os.path.join(path, "img_loader"))
-        joblib.dump(self.__labels, os.path.join(path, "labels"))
+        joblib.dump(self._labels, os.path.join(path, "labels"))
 
     @classmethod
     def load(cls, path):
