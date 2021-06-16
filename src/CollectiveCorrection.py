@@ -43,8 +43,9 @@ class CollectiveCorrection(CorrectionMethod):
                 common_elems = [el for el in common_elems if not merged_concepts[labels.index(el)]]
 
                 length = len(common_elems)
-                if length > max_common_num:
+                if length >= max_common_num:
                     elems_to_merge = common_elems
+                    max_common_num = length
 
             if elems_to_merge:
                 for elem in elems_to_merge:
