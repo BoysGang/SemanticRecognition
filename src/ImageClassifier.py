@@ -5,6 +5,8 @@ from ImgLoader import ImgLoader
 class ImageClassifier(ABC):
     def __init__(self):
         self._img_loader = None
+        self._is_trained = False
+        self._labels = list()
 
     @abstractmethod
     def fit(self, img_data_generator: ImgDataGenerator):
