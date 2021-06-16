@@ -6,6 +6,7 @@ class ImgLoader:
         self.__img_scale = img_scale
         self.__color_mode = color_mode
 
+    # Load image from the given path
     def load_img(self, img_path):
         img = image.load_img(img_path, target_size=self.__img_scale, color_mode=self.__color_mode)
         img = image.img_to_array(img) / 255

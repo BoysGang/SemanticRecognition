@@ -32,7 +32,9 @@ class ConvolutionalNeuralNetwork(ImageClassifier):
         if physical_devices and acceleration:
             tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
+    # Train CNN model
     def fit(self, img_data_generator: ImgDataGenerator):
+        # Divide images into train, validation and test samples
         self._init_img_loader(img_data_generator)
 
         train_generator = img_data_generator.train_generator
@@ -56,6 +58,7 @@ class ConvolutionalNeuralNetwork(ImageClassifier):
 
         output_neurons = len(self._labels)
 
+        # CNN model representation
         self.__model = models.Sequential([
             layers.Conv2D(filters=64, kernel_size=(3, 3), activation='relu', input_shape=shape),
             layers.MaxPooling2D((2, 2)),
@@ -86,7 +89,7 @@ class ConvolutionalNeuralNetwork(ImageClassifier):
                 validation_data=validation_generator,
                 validation_steps=validation_samples_num // batch_size)
 
-        # Confusion Matrix and Classification Report
+        # Test model
         Y_pred = self.__model.predict(test_generator, test_samples_num // batch_size+1)
         y_pred = np.argmax(Y_pred, axis=1)
         
@@ -99,6 +102,7 @@ class ConvolutionalNeuralNetwork(ImageClassifier):
         if self.__plot_fit_hist:
             self.__plot_hist(history)
 
+    # Classify image
     def predict(self, img_path):
         image = self._img_loader.load_img(img_path)
 
@@ -109,12 +113,14 @@ class ConvolutionalNeuralNetwork(ImageClassifier):
 
         return self._labels, probabilities[0]
 
+    # Save CNN model to the given path
     def save(self, path):
         self.__model.save(path)
 
         joblib.dump(self._img_loader, os.path.join(path, "img_loader"))
         joblib.dump(self._labels, os.path.join(path, "labels"))
 
+    # Load CNN model from the given path
     @classmethod
     def load(cls, path):
         model = models.load_model(path)
@@ -123,6 +129,7 @@ class ConvolutionalNeuralNetwork(ImageClassifier):
 
         return ConvolutionalNeuralNetwork(model=model, labels=labels, img_loader=img_loader)
 
+    # Plot training history
     def __plot_hist(self, history):
         acc = history.history['accuracy']
         val_acc = history.history['val_accuracy']
