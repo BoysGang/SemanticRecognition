@@ -1,4 +1,5 @@
 import networkx as nx
+
 from CorrectionMethod import CorrectionMethod
 from SemanticGraph import SemanticGraph
 
@@ -11,14 +12,14 @@ class PairCorrection(CorrectionMethod):
     def execute(self, labels, predictions, semantic_graph: SemanticGraph):
         clusters = list()
 
-        # mark low probabilities concept as viewed and add as single vertex clusters
+        # Mark low probabilities concept as viewed and add as single vertex clusters
         viewed_concepts = [True] * len(labels)
         for i in range(len(labels)):
             if predictions[i] < self.__threshold:
                 viewed_concepts[i] = False
                 clusters.append([labels[i]])
 
-        # look for cluster merging
+        # Look for cluster merging
         for i in range(len(viewed_concepts)):
             if viewed_concepts[i]:
                 cluster = [labels[i]]
@@ -33,7 +34,7 @@ class PairCorrection(CorrectionMethod):
                 viewed_concepts[i] = False
                 clusters.append(cluster)
 
-        # compute clusters prbabilities
+        # Compute clusters prbabilities
         cluster_probs = list()
         for cluster in clusters:
             prob_sum = 0
@@ -44,10 +45,10 @@ class PairCorrection(CorrectionMethod):
 
             cluster_probs.append(prob_sum)
 
-        # normalization
+        # Normalization
         normalized_cluster_probs = self._normalize(cluster_probs)
 
-        # new results labels
+        # Get new results labels
         cluster_labels = list()
         for cluster in clusters:
             cluster_labels.append(', '.join(cluster))

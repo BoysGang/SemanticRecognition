@@ -1,12 +1,15 @@
 import os
-import networkx as nx
-import matplotlib.pyplot as plt
+
 import joblib
+import matplotlib.pyplot as plt
+import networkx as nx
+
 
 class SemanticGraph(nx.Graph):
     def __init__(self):
         super().__init__()
 
+    # Read graph from dictionary file
     def read_from_dictionary(self, dict_path):
         for line in open(dict_path, 'r', encoding="utf8"):
             line = line.rstrip()
@@ -18,8 +21,9 @@ class SemanticGraph(nx.Graph):
 
         return self
 
+    # Filter graph by list of classes
     def filter(self, classes, depth=3):
-        # classes preproccesing
+        # Classes preproccesing
         classes = [x.lower() for x in classes]
         
         temp = []
@@ -31,7 +35,7 @@ class SemanticGraph(nx.Graph):
         
         classes = temp
 
-        # get required subgraph
+        # Get required subgraph
         final_graph = SemanticGraph()
 
         for i in range(len(classes)):
@@ -47,15 +51,17 @@ class SemanticGraph(nx.Graph):
         self.add_nodes_from(final_graph.nodes)
         self.add_edges_from(final_graph.edges)
 
+    # Graph serialization
     def save(self, path):
         joblib.dump(self, path + '.pkl')
 
+    # Load serialized graph
     @classmethod
     def load(cls, pickle_path):
         return joblib.load(pickle_path)
 
+    # Save graph picture
     def save_graph_image(self, path):
-        # save graph picture
         options = {
             'node_color': 'red',
             'node_size': 100,
