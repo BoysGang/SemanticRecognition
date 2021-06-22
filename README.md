@@ -1,2 +1,3 @@
 # SemanticRecognition
-Image recognition system by semantic graph correction
+A system for recognizing complex images that uses a semantic graph to increase the relevance of the classification result. <br><br>
+The system provides opportunities for training classifiers of two types (CNN and BoVW), using a training set of images divided into classes. With the help of a trained classifier system can analyze the input image and obtain the results of an independent classification for each class. The system implements algorithms for correcting classification results, and also has the ability to build a semantic graph from a dictionary of semantic links, extract a semantic subgraph for a list of objects for recognition, and suggest related semantic concepts based on a list of basic concepts.
